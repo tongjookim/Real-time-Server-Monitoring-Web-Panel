@@ -9,7 +9,7 @@
 ---
 
 ## 📸 Preview
-![Dashboard Preview](./image_f7548b.png)
+![Dashboard Preview](https://sir.kr/storage/showcases/2026/04/nBlvC8aPkzBfg1OdWxpL.jpg)
 *실제 구동 중인 대시보드의 모습입니다. 독보적인 Olive 테마로 시인성을 높였습니다.*
 
 ---
