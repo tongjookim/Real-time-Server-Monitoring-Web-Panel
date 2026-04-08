@@ -53,7 +53,7 @@
 
 ### 2. Clone Repository
 ```bash
-git clone [https://github.com/tongjookim/Real-time-Server-Monitoring-Web-Panel.git](https://github.com/tongjookim/Real-time-Server-Monitoring-Web-Panel.git)
+git clone https://github.com/tongjookim/Real-time-Server-Monitoring-Web-Panel.git
 cd Real-time-Server-Monitoring-Web-Panel
 ```
 
