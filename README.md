@@ -1,30 +1,86 @@
-# My Server Monitor
-- 목적: 본 프로젝트는 중소규모 서버 환경에서 실시간 트래픽 과부하를 감시하고, 시스템 핵심 자원(CPU, RAM, Disk)을 모니터링하기 위해 구축된 경량 웹 패널입니다. cPanel 등의 상용 솔루션 비용 부담을 줄이면서도 실질적인 트래픽 원인 분석 기능을 제공하는 것을 목표로 합니다.
-- 스택: Python, Flask, psutil, Bootstrap 5
-- 주요 기능: 
-  - 실시간 시스템 모니터링: CPU, 메모리, 디스크 사용량을 2초 간격으로 시각화
-  - 네트워크 대역폭 추적: 현재 업로드 및 다운로드 속도를 MB/s 단위로 실시간 계산
-  - 활성 연결 감시(Active Connections): 서버에 연결된 외부 IP와 포트 정보를 실시간 리스트업하여 트래픽 유발원을 특정.
-- 주요 보안 사항: 특정 포트(8650) 사용, SSH 터널링 권장
-- 파일 구조:
- * app.py: Flask 기반의 API 및 웹 서버.
- * templates/index.html: 실시간 대시보드 UI 템플릿.
- * requirements.txt: 프로젝트 의존성 라이브러리 목록.
--  Claude Code 유지보수 가이드 (Maintenance Note)
- 1. psutil의 raddr 속성 체크 (필수):
-  * psutil.net_connections() 호출 시, 특정 연결 타입에서 원격 주소 정보(raddr)가 누락되어 AttributeError가 발생할 수 있습니다.
-  * 반드시 if conn.raddr: 조건문을 통해 해당 속성이 존재하는지 확인한 후 ip 및 port에 접근해야 합니다.
+# 🛡️ Real-time Server Sentinel (Olive Dashboard)
 
- 2. 트래픽 속도 계산 로직:
-  * 속도는 psutil.net_io_counters()의 누적값 차이를 시간 간격(interval)으로 나누어 계산합니다.
-  * last_net_io와 last_time 글로벌 변수의 업데이트 주기가 어긋나지 않도록 주의해야 합니다.
+![Python](https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/flask-v3.0-green?logo=flask&logoColor=white)
+![License](https://img.shields.io/badge/license-MIT-important)
 
- 3. 보안 준수
-  * 본 패널은 관리용 도구이므로 외부에 노출되어서는 안 됩니다.
-  * 운영 환경에서는 반드시 UFW 방화벽을 설정하여 허용된 IP에서만 접속하게 하거나, SSH 터널링을 통해 접근하도록 유도하십시오.
+> **상용 수준의 비주얼과 안정성을 갖춘 경량 실시간 서버 모니터링 웹 패널입니다.** > A professional-grade, lightweight real-time server monitoring dashboard with a sleek Olive-Dark theme.
 
-- 향후 로드맵
- * [ ] Flask-HTTPAuth를 활용한 간단한 관리자 로그인 기능.
- * [ ] Chart.js를 사용한 최근 1시간 트래픽 변동 추이 그래프.
- * [ ] 트래픽 과다 유발 IP를 원클릭으로 ufw 차단하는 기능.
- * [ ] 특정 트래픽 임계치 도달 시 텔레그램 봇 자동 알림.
+---
+
+## 📸 Preview
+![Dashboard Preview](./image_f7548b.png)
+*실제 구동 중인 대시보드의 모습입니다. 독보적인 Olive 테마로 시인성을 높였습니다.*
+
+---
+
+## ✨ Key Features (주요 기능)
+
+### 🖥️ System Resources Monitoring
+- **Real-time Metrics**: CPU, RAM, Disk 사용량을 실시간 퍼센트로 표시합니다.
+- **Dynamic Graphs**: Chart.js를 활용하여 리소스 변화 추이를 부드러운 선 그래프로 시각화합니다.
+
+### 🌐 Network Traffic Analysis
+- **Live Speed**: 현재 서버의 업로드 및 다운로드 속도를 실시간으로 측정합니다.
+- **Accumulated Stats**: 일간, 주간, 월간, 연간 누적 트래픽을 계산하여 효율적인 대역폭 관리를 돕습니다.
+
+### 🔗 Active Connection Viewer
+- **Connection Mapping**: 현재 서버에 연결된 모든 활성 세션의 로컬 IP와 외부 IP를 매핑하여 보여줍니다.
+- **Stability**: `psutil` 라이브러리의 `raddr`(Remote Address) 예외 처리를 통해 리스닝 포트나 로컬 소켓에서도 에러 없이 안정적으로 작동합니다.
+
+### 🎨 Premium UI/UX
+- **Olive-Dark Theme**: 장시간 관제 시 눈의 피로도를 줄여주는 다크 그린 계열의 커스텀 테마를 적용했습니다.
+- **Responsive Design**: 다양한 화면 크기에서도 대시보드 레이아웃이 깨지지 않도록 설계되었습니다.
+
+---
+
+## 🛠️ Tech Stack (기술 스택)
+
+| Category | Technology |
+| :--- | :--- |
+| **Backend** | Python 3.10, Flask |
+| **Data Collection** | psutil |
+| **Frontend** | HTML5, CSS3, Vanilla JS |
+| **Chart Library** | Chart.js |
+| **Environment** | Linux (Ubuntu), SSH |
+
+---
+
+## 🚀 Installation & Setup (설치 방법)
+
+### 1. Requirements
+서버에 `tar`, `wget`, `curl`이 설치되어 있어야 하며, Python 환경이 필요합니다.
+
+### 2. Clone Repository
+```bash
+git clone [https://github.com/tongjookim/Real-time-Server-Monitoring-Web-Panel.git](https://github.com/tongjookim/Real-time-Server-Monitoring-Web-Panel.git)
+cd Real-time-Server-Monitoring-Web-Panel
+```
+
+### 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Run Application
+```bash
+python app.py
+```
+브라우저에서 http://your-server-ip:5000으로 접속하세요.
+
+## 📂 Project Structure
+.
+├── app.py              # Flask 백엔드 로직 및 데이터 수집 (psutil)
+├── static/
+│   ├── css/            # Olive 테마 커스텀 스타일시트
+│   └── js/             # Chart.js 연동 및 실시간 데이터 업데이트 로직
+├── templates/
+│   └── index.html      # 메인 대시보드 구조
+└── requirements.txt    # 의존성 패키지 목록
+
+## 🔒 Technical Note & Security
+- raddr Exception Handling: 네트워크 연결 조회 시 raddr 속성이 없는 경우(Listen 상태 등)를 대비한 예외 처리가 적용되어 있어 서버 다운 타임을 방지합니다.
+- Security Warning: 깃허브에 푸시할 때 SSH 키 파일(id_rsa)이나 서버 설정 파일이 포함되지 않도록 .gitignore 설정을 반드시 확인하세요.
+
+## 📄 License
+이 프로젝트는 MIT License를 따릅니다. 개인적/상업적 용도로 자유롭게 수정 및 배포가 가능합니다.
