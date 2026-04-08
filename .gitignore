@@ -1,0 +1,13 @@
+# 가상환경
+venv/
+__pycache__/
+
+# 보안 관련 (절대 올리면 안 됨)
+*.pem
+*.key
+id_rsa
+config
+.env
+
+# OS 관련
+.DS_Store

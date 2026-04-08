@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary:      #181C14;
+            --primary-dark: #10130e;
+            --primary-mid:  #222819;
+            --primary-light:#2e3624;
+            --accent:       #7cb342;
+            --accent-dim:   #558b2f;
+            --text:         #e8ead5;
+            --text-muted:   #8a9a7a;
+            --border:       #2e3624;
+            --card-bg:      #1e2418;
+            --topbar-bg:    #141710;
+            --danger:       #ef5350;
+            --warning:      #ffb74d;
+            --info:         #4fc3f7;
+            --success:      #81c784;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--primary-mid);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0;
+            width: 220px;
+            height: 100vh;
+            background: var(--primary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            padding: 20px 18px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-brand .brand-icon {
+            width: 32px; height: 32px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; color: #fff;
+            flex-shrink: 0;
+        }
+        .sidebar-brand .brand-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+        .sidebar-brand .brand-text small {
+            display: block;
+            font-size: 10px;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 12px 0;
+            margin: 0;
+            flex: 1;
+        }
+        .sidebar-nav li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 18px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav li a:hover,
+        .sidebar-nav li a.active {
+            color: var(--text);
+            background: var(--primary-light);
+            border-left-color: var(--accent);
+        }
+        .sidebar-nav li a i { font-size: 15px; width: 18px; text-align: center; }
+
+        .sidebar-section {
+            padding: 6px 18px 2px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .sidebar-footer {
+            padding: 14px 18px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.15s;
+        }
+        .sidebar-footer a:hover { color: var(--danger); }
+
+        /* ── Main ── */
+        .main-wrap {
+            margin-left: 220px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            background: var(--topbar-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        .topbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .topbar-title i { color: var(--accent); }
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .uptime-badge {
+            background: var(--primary-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .uptime-badge span { color: var(--text); font-weight: 600; }
+
+        /* ── Content ── */
+        .content { padding: 24px; }
+
+        .section-header {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-header::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── Cards ── */
+        .cp-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .cp-card .card-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cp-card .card-label i { font-size: 13px; }
+        .cp-card .card-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        /* progress bar */
+        .cp-progress {
+            height: 4px;
+            background: var(--primary-light);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .cp-progress-bar {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+
+        /* speed cards */
+        .speed-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .speed-card .speed-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .speed-card .speed-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .speed-card .speed-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        /* traffic cards */
+        .traffic-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        .traffic-card .tc-head {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .traffic-card .tc-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 4px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .traffic-card .tc-row:last-child { border-bottom: none; }
+        .traffic-card .tc-row .tc-key { color: var(--text-muted); }
+        .traffic-card .tc-row .tc-val { color: var(--text); font-weight: 600; }
+        .traffic-card .tc-total .tc-val { color: var(--accent); }
+
+        /* table */
+        .cp-table-wrap {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .cp-table-head {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cp-table-head i { color: var(--accent); }
+
+        .cp-table { width: 100%; border-collapse: collapse; }
+        .cp-table thead th {
+            background: var(--primary-light);
+            padding: 9px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+        .cp-table tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        .cp-table tbody tr:last-child { border-bottom: none; }
+        .cp-table tbody tr:hover { background: var(--primary-light); }
+        .cp-table td {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: var(--text);
+        }
+
+        .badge-local {
+            background: var(--primary-light);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        .badge-remote {
+            background: rgba(79,195,247,0.12);
+            color: var(--info);
+            border: 1px solid rgba(79,195,247,0.25);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+        .status-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--success);
+        }
+        .status-dot::before {
+            content: '';
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 6px var(--success);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-icon"><i class="bi bi-hdd-rack"></i></div>
+        <div class="brand-text">
+            Server Monitor
+            <small>Admin Panel</small>
+        </div>
+    </div>
+    <ul class="sidebar-nav">
+        <li class="sidebar-section">Overview</li>
+        <li><a href="#system" class="active"><i class="bi bi-cpu"></i> System Resources</a></li>
+        <li><a href="#network"><i class="bi bi-speedometer2"></i> Network Speed</a></li>
+        <li class="sidebar-section">Analytics</li>
+        <li><a href="#traffic"><i class="bi bi-bar-chart-line"></i> Traffic Stats</a></li>
+        <li><a href="#connections"><i class="bi bi-diagram-3"></i> Active Connections</a></li>
+    </ul>
+    <div class="sidebar-footer">
+        <a href="/logout"><i class="bi bi-box-arrow-left"></i> 로그아웃</a>
+    </div>
+</nav>
+
+<!-- ── Main ── -->
+<div class="main-wrap">
+    <div class="topbar">
+        <div class="topbar-title">
+            <i class="bi bi-grid-1x2-fill"></i> Dashboard
+        </div>
+        <div class="topbar-right">
+            <div class="uptime-badge">
+                <i class="bi bi-clock-history"></i> 가동 시작: <span id="uptime">-</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+
+        <!-- System Resources -->
+        <div id="system" class="section-header"><i class="bi bi-cpu-fill" style="color:var(--accent)"></i> System Resources</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="cp-card">
+                    <div class="card-label"><i class="bi bi-cpu" style="color:var(--info)"></i> CPU Usage</div>
+                    <div class="card-value" id="cpu-val">0%</div>
+                    <div class="cp-progress"><div class="cp-progress-bar" id="cpu-bar" style="width:0%;background:var(--info)"></div></div>
+                    <canvas id="cpu-chart" height="70"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cp-card">
+                    <div class="card-label"><i class="bi bi-memory" style="color:var(--warning)"></i> RAM Usage</div>
+                    <div class="card-value" id="ram-val">0%</div>
+                    <div class="cp-progress"><div class="cp-progress-bar" id="ram-bar" style="width:0%;background:var(--warning)"></div></div>
+                    <canvas id="ram-chart" height="70"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="cp-card">
+                    <div class="card-label"><i class="bi bi-hdd" style="color:var(--success)"></i> Disk Usage</div>
+                    <div class="card-value" id="disk-val">0%</div>
+                    <div class="cp-progress"><div class="cp-progress-bar" id="disk-bar" style="width:0%;background:var(--success)"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network Speed -->
+        <div id="network" class="section-header"><i class="bi bi-speedometer2" style="color:var(--accent)"></i> Network Speed</div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="speed-card">
+                    <div class="speed-icon" style="background:rgba(79,195,247,0.12);color:var(--info)">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="speed-label">업로드 속도</div>
+                        <div class="speed-value" id="up-val" style="color:var(--info)">0.00 MB/s</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="speed-card">
+                    <div class="speed-icon" style="background:rgba(129,199,132,0.12);color:var(--success)">
+                        <i class="bi bi-arrow-down-circle-fill"></i>
+                    </div>
+                    <div>
+                        <div class="speed-label">다운로드 속도</div>
+                        <div class="speed-value" id="down-val" style="color:var(--success)">0.00 MB/s</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Stats -->
+        <div id="traffic" class="section-header">
+            <i class="bi bi-bar-chart-line-fill" style="color:var(--accent)"></i> Traffic Statistics
+            <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);margin-left:4px">매 분 갱신</span>
+        </div>
+        <div class="row g-3 mb-4">
+            {% for period, label, icon in [('daily','일간','bi-calendar-day'),('weekly','주간','bi-calendar-week'),('monthly','월간','bi-calendar-month'),('annual','연간','bi-calendar-range')] %}
+            <div class="col-6 col-md-3">
+                <div class="traffic-card">
+                    <div class="tc-head"><i class="bi {{ icon }}" style="color:var(--accent)"></i> {{ label }} 트래픽</div>
+                    <div class="tc-row">
+                        <span class="tc-key">↑ 업로드</span>
+                        <span class="tc-val" id="traffic-{{ period }}-sent">-</span>
+                    </div>
+                    <div class="tc-row">
+                        <span class="tc-key">↓ 다운로드</span>
+                        <span class="tc-val" id="traffic-{{ period }}-recv">-</span>
+                    </div>
+                    <div class="tc-row tc-total">
+                        <span class="tc-key fw-bold" style="color:var(--text)">합계</span>
+                        <span class="tc-val" id="traffic-{{ period }}-total">-</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Active Connections -->
+        <div id="connections" class="section-header"><i class="bi bi-diagram-3-fill" style="color:var(--accent)"></i> Active Connections</div>
+        <div class="cp-table-wrap mb-4">
+            <div class="cp-table-head">
+                <i class="bi bi-activity"></i> 실시간 활성 연결
+            </div>
+            <table class="cp-table">
+                <thead>
+                    <tr>
+                        <th>내부 주소 (Local)</th>
+                        <th>외부 주소 (Remote IP)</th>
+                        <th>상태</th>
+                    </tr>
+                </thead>
+                <tbody id="conn-list">
+                    <tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">데이터를 불러오는 중...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+    </div><!-- /content -->
+</div><!-- /main-wrap -->
+
+<script>
+    const MAX_POINTS = 30;
+
+    function makeChart(ctxId, color) {
+        return new Chart(document.getElementById(ctxId), {
+            type: 'line',
+            data: {
+                labels: Array(MAX_POINTS).fill(''),
+                datasets: [{
+                    data: Array(MAX_POINTS).fill(null),
+                    borderColor: color,
+                    backgroundColor: color.replace('1)', '0.08)'),
+                    borderWidth: 1.5,
+                    pointRadius: 0,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                animation: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        min: 0, max: 100,
+                        ticks: { stepSize: 50, callback: v => v + '%', color: '#8a9a7a', font: { size: 9 } },
+                        grid: { color: 'rgba(46,54,36,0.8)' }
+                    }
+                }
+            }
+        });
+    }
+
+    const cpuChart = makeChart('cpu-chart', 'rgba(79,195,247,1)');
+    const ramChart = makeChart('ram-chart', 'rgba(255,183,77,1)');
+
+    function pushData(chart, value) {
+        chart.data.datasets[0].data.push(value);
+        chart.data.datasets[0].data.shift();
+        chart.data.labels.push('');
+        chart.data.labels.shift();
+        chart.update('none');
+    }
+
+    function setBar(id, value) {
+        document.getElementById(id).style.width = value + '%';
+    }
+
+    function updateStats() {
+        fetch('/api/stats')
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('cpu-val').innerText = data.cpu + '%';
+                document.getElementById('ram-val').innerText = data.ram + '%';
+                document.getElementById('disk-val').innerText = data.disk + '%';
+                setBar('cpu-bar', data.cpu);
+                setBar('ram-bar', data.ram);
+                setBar('disk-bar', data.disk);
+                pushData(cpuChart, data.cpu);
+                pushData(ramChart, data.ram);
+                document.getElementById('up-val').innerText = data.up + ' MB/s';
+                document.getElementById('down-val').innerText = data.down + ' MB/s';
+                document.getElementById('uptime').innerText = data.uptime;
+
+                let connHtml = '';
+                if (data.conns.length === 0) {
+                    connHtml = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:20px">활성 연결 없음</td></tr>';
+                } else {
+                    data.conns.forEach(c => {
+                        connHtml += `<tr>
+                            <td><span class="badge-local">${c.local}</span></td>
+                            <td><span class="badge-remote">${c.remote}</span></td>
+                            <td><span class="status-dot">${c.status}</span></td>
+                        </tr>`;
+                    });
+                }
+                document.getElementById('conn-list').innerHTML = connHtml;
+            })
+            .catch(err => console.error("Error fetching stats:", err));
+    }
+
+    function updateTraffic() {
+        fetch('/api/traffic')
+            .then(res => res.json())
+            .then(data => {
+                ['daily', 'weekly', 'monthly', 'annual'].forEach(p => {
+                    document.getElementById(`traffic-${p}-sent`).innerText  = data[p].sent;
+                    document.getElementById(`traffic-${p}-recv`).innerText  = data[p].recv;
+                    document.getElementById(`traffic-${p}-total`).innerText = data[p].total;
+                });
+            })
+            .catch(err => console.error("Error fetching traffic:", err));
+    }
+
+    setInterval(updateStats, 2000);
+    updateStats();
+
+    setInterval(updateTraffic, 60000);
+    updateTraffic();
+
+    // 사이드바 활성 링크 - 스크롤 위치 기반
+    const sections = ['system','network','traffic','connections'];
+    window.addEventListener('scroll', () => {
+        let current = sections[0];
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            if (el && window.scrollY >= el.offsetTop - 80) current = id;
+        });
+        document.querySelectorAll('.sidebar-nav a').forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+        });
+    });
+</script>
+</body>
+</html>
