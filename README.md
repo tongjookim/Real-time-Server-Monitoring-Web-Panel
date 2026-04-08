@@ -69,7 +69,7 @@ python app.py
 브라우저에서 http://your-server-ip:5000으로 접속하세요.
 
 ## 📂 Project Structure
-.
+```
 ├── app.py              # Flask 백엔드 로직 및 데이터 수집 (psutil)
 ├── static/
 │   ├── css/            # Olive 테마 커스텀 스타일시트
@@ -77,6 +77,7 @@ python app.py
 ├── templates/
 │   └── index.html      # 메인 대시보드 구조
 └── requirements.txt    # 의존성 패키지 목록
+```
 
 ## 🔒 Technical Note & Security
 - raddr Exception Handling: 네트워크 연결 조회 시 raddr 속성이 없는 경우(Listen 상태 등)를 대비한 예외 처리가 적용되어 있어 서버 다운 타임을 방지합니다.
