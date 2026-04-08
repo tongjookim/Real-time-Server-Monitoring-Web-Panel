@@ -71,11 +71,9 @@ python app.py
 ## 📂 Project Structure
 ```
 ├── app.py              # Flask 백엔드 로직 및 데이터 수집 (psutil)
-├── static/
-│   ├── css/            # Olive 테마 커스텀 스타일시트
-│   └── js/             # Chart.js 연동 및 실시간 데이터 업데이트 로직
 ├── templates/
 │   └── index.html      # 메인 대시보드 구조
+│   └── login.html      # 로그인 페이지 구조
 └── requirements.txt    # 의존성 패키지 목록
 ```
 
